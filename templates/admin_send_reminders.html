@@ -1,0 +1,18 @@
+{% extends 'layout.html' %}
+{% block content %}
+  <h3>Send Reminders</h3>
+  <p>Reminders sent: {{ count }}</p>
+  <table class="table">
+    <thead><tr><th>Installment ID</th><th>Result</th><th>Info</th></tr></thead>
+    <tbody>
+      {% for r in results %}
+        <tr>
+          <td>{{ r[0] }}</td>
+          <td>{{ 'OK' if r[1] == True else 'Skipped' }}</td>
+          <td>{{ r[2] }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="text-muted">Note: configure SMTP using environment variables `SMTP_SERVER`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` and `FROM_EMAIL`.</p>
+{% endblock %}

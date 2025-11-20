@@ -1,0 +1,28 @@
+{% extends 'layout.html' %}
+{% block content %}
+  <h3>Allocate Room</h3>
+  {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+  {% endif %}
+  <form method="post" class="row g-2">
+    <div class="col-md-6">
+      <label class="form-label">Student</label>
+      <select name="student_id" class="form-select">
+        {% for s in students %}
+          <option value="{{ s.id }}">{{ s.name }} • Fee: {{ '%.2f'|format(s.total_fee or 0) }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Room</label>
+      <select name="room_id" class="form-select">
+        {% for r in rooms %}
+          <option value="{{ r.id }}">{{ r.number }} — {{ r.occupancy }}/{{ r.capacity }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-12">
+      <button class="btn btn-success">Allocate</button>
+    </div>
+  </form>
+{% endblock %}

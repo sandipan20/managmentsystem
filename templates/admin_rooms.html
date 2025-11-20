@@ -1,0 +1,13 @@
+{% extends 'layout.html' %}
+{% block content %}
+  <h3>Rooms</h3>
+  <div class="room-grid mt-3">
+    {% for r in rooms %}
+      <div class="room-card" data-room-id="{{ r.id }}">
+        <button class="btn room-btn w-100">{{ r.number }}<span class="badge bg-light text-dark ms-2">{{ r.occupancy }}/{{ r.capacity }}</span></button>
+        <div class="room-details mt-2" style="display:none;"></div>
+      </div>
+    {% endfor %}
+  </div>
+  <script src="/static/js/admin_rooms.js"></script>
+{% endblock %}

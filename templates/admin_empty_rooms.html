@@ -1,0 +1,16 @@
+{% extends 'layout.html' %}
+{% block content %}
+  <h3>Empty / Available Rooms</h3>
+  <table class="table mt-3">
+    <thead><tr><th>Room</th><th>Capacity</th><th>Occupancy</th></tr></thead>
+    <tbody>
+      {% for r in rooms %}
+      <tr>
+        <td>{{ r.number }}</td>
+        <td>{{ r.capacity }}</td>
+        <td>{{ r.occupancy }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

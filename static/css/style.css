@@ -1,0 +1,135 @@
+:root{
+  --bg:#f7f9fb;
+  --card:#ffffff;
+  --brand:#0a9396; /* teal */
+  --muted:#6c757d;
+  --accent:#7b4bff; /* purple */
+  --danger:#e63946;
+  --amber:#ffb703;
+  --glass: rgba(255,255,255,0.8);
+}
+html,body{height:100%;background:var(--bg);font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial}
+.app-root{min-height:100vh}
+.site-header{background:linear-gradient(90deg,var(--brand-1) 0%, var(--brand-2) 100%);color:#fff}
+.site-header .brand-mark{width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,var(--brand-1),var(--brand-2));display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:20px;letter-spacing:1px;box-shadow:0 10px 28px rgba(10,20,30,0.18);border:2px solid rgba(255,255,255,0.12)}
+.site-header .brand-title{font-weight:800;color:#fff;font-size:18px}
+.site-header .brand-sub{font-size:12px;opacity:0.95;color:rgba(255,255,255,0.9)}
+.search-input .form-control{background: rgba(255,255,255,0.95);border: 1px solid rgba(15,41,60,0.08);color:#102a43;padding:6px 10px;border-radius:8px}
+.search-input .form-control:focus{outline:none;box-shadow:0 6px 20px rgba(10,20,30,0.06)}
+.stat-card{border-radius:12px;box-shadow:0 6px 20px rgba(15,23,42,0.06);background:linear-gradient(180deg, var(--card), var(--glass));}
+.stat-card .stat-label{font-size:12px;color:var(--muted)}
+.stat-card .stat-value{font-size:20px;font-weight:700}
+.stat-icon{background:#fff;border-radius:8px;padding:10px;color:var(--brand)}
+.stat-students .stat-icon{color:var(--brand)}
+.stat-rooms .stat-icon{color:var(--accent)}
+.stat-allocations .stat-icon{color:var(--amber)}
+.stat-pending .stat-icon{color:var(--danger)}
+.card {border:0}
+.brand{color:#fff;text-decoration:none}
+.brand .brand-title{font-size:18px}
+.brand .brand-sub{font-size:12px}
+.list-group-item{border-radius:8px;margin-bottom:8px}
+.student-row a{color:inherit}
+.btn-primary{background:var(--brand);border-color:var(--brand)}
+.btn-primary:hover{background:#088f8f}
+.fees {background:linear-gradient(180deg, rgba(10,147,150,0.06), transparent);padding:12px;border-radius:8px}
+.badge-custom{background:var(--accent);color:#fff}
+.footer-small{font-size:12px;color:var(--muted)}
+/* responsive tweaks */
+@media (max-width:767px){
+  .search-input{display:none}
+}
+
+/* flatpickr tweaks */
+.flatpickr-calendar{z-index:2000}
+
+/* login background large text */
+.login-bg-text{font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial}
+
+/* subtle form styles */
+input[readonly][disabled]{background:#f6f7f9;border-color:#e9ecef}
+
+/* small helper */
+.text-muted-2{color:#8a98a8}
+/* Consolidated stylesheet for Culture Hostel UI */
+
+:root {
+  --bg: #f7fbfc;
+  --surface: #ffffff;
+  --muted: #6c757d;
+  --brand-1: #0a9396; /* teal */
+  --brand-2: #6a4c93; /* purple */
+  --accent: #ee9b00; /* amber */
+  --danger: #d9480f;
+  --primary-500: #0a9396;
+  --accent-500: #ee9b00;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: #102a43; font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; }
+
+/* header / brand */
+.site-header { background: linear-gradient(90deg, var(--brand-1) 0%, var(--brand-2) 100%); color: #fff; border-bottom: 0; }
+.brand { text-decoration: none; color: inherit; display:flex; align-items:center; gap:12px }
+.brand-mark { width:64px; height:64px; border-radius:12px; background: linear-gradient(135deg,var(--brand-1),var(--brand-2)); color: white; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:20px; letter-spacing:1px; box-shadow: 0 10px 30px rgba(10,20,30,0.18); border: 2px solid rgba(255,255,255,0.12); }
+.brand-title { font-weight:800; color: #ffffff; font-size:18px; text-transform:none }
+.brand-sub { font-size: 0.85rem; color: rgba(255,255,255,0.85); }
+
+/* hero */
+.hero-title { font-weight:700; }
+.stat-card { border-radius: 12px; box-shadow: 0 8px 28px rgba(15,41,60,0.04); }
+.stat-label { font-size: 0.9rem; color: var(--muted); }
+.stat-value { font-size: 1.5rem; font-weight:700; }
+.stat-icon { width:44px; height:44px; display:flex; align-items:center; justify-content:center; border-radius:8px; }
+
+.stat-students { background: linear-gradient(90deg, rgba(10,147,150,0.08), rgba(10,147,150,0.02)); }
+.stat-rooms { background: linear-gradient(90deg, rgba(106,76,147,0.08), rgba(106,76,147,0.02)); }
+.stat-allocations { background: linear-gradient(90deg, rgba(238,155,0,0.08), rgba(238,155,0,0.02)); }
+.stat-pending { background: linear-gradient(90deg, rgba(217,72,15,0.08), rgba(217,72,15,0.02)); }
+
+/* clickable stat link */
+.stat-link { display:block; color:inherit; text-decoration:none; }
+.stat-link .stat-card { transition: transform .12s ease, box-shadow .12s ease; }
+.stat-link:hover .stat-card { transform: translateY(-6px); box-shadow: 0 14px 36px rgba(15,41,60,0.08); }
+.stat-link:active .stat-card { transform: translateY(-2px); }
+.stat-link { cursor: pointer; }
+
+/* quick actions */
+.icon-btn { display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:8px; background:transparent; color:var(--muted); border:1px solid rgba(15,41,60,0.04); }
+.icon-btn:hover { background: rgba(15,41,60,0.04); color:var(--brand-1); }
+
+/* cards */
+.card { border-radius: 12px; }
+
+/* Buttons and toolbar */
+.action-toolbar .btn { min-width: 140px; }
+@media (max-width: 576px) { .action-toolbar .btn { min-width: 100%; } }
+
+/* small utilities */
+.text-purple { color: var(--brand-2) !important; }
+.text-amber { color: var(--accent) !important; }
+
+/* subtle global icon spacing */
+.bi { vertical-align: -.125em; margin-right: .25rem; }
+
+.stat-students .card-title, .stat-rooms .card-title, .stat-allocations .card-title, .stat-pending .card-title { font-weight:700; opacity:0.95; }
+.stat-students .card-title { color: var(--primary-500); }
+.stat-rooms .card-title { color: #6a4c93; }
+.stat-allocations .card-title { color: var(--accent-500); }
+.stat-pending .card-title { color: #d9480f; }
+
+/* Action toolbar formatting */
+.action-toolbar { align-items: center; }
+.action-toolbar .btn { min-width: 140px; display: inline-flex; align-items: center; justify-content: center; gap: .5rem; }
+@media (max-width: 576px) {
+  .action-toolbar .btn { min-width: 100%; }
+}
+
+/* extra small responsive tweaks */
+@media (max-width: 768px) {
+  .brand-sub { display: none; }
+  .search-wrap { display: none !important; }
+}
+
+
+

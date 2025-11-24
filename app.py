@@ -7,6 +7,7 @@ import smtplib
 import ssl
 from email.message import EmailMessage
 from datetime import datetime
+from sqlalchemy import or_
 
 
 def create_app():
@@ -92,8 +93,11 @@ def create_app():
     # Require login for all routes except allowed ones
     @app.before_request
     def require_login():
-        # allow static files and the login page and the logout endpoint
-        allowed = ('login', 'static', 'favicon')
+        # allow static files and a set of public endpoints (login/register/index and public APIs)
+        allowed = (
+            'login', 'static', 'favicon', 'index', 'register_student',
+            'students_page', 'student_detail_page', 'api_students', 'api_student_detail', 'api_create_student'
+        )
         endpoint = request.endpoint or ''
         if endpoint.startswith('static'):
             return None
@@ -131,7 +135,7 @@ def create_app():
         if q:
             # simple search on name, email, phone or roll_no
             qlike = f"%{q}%"
-            base = base.filter(db.or_(Student.name.ilike(qlike), Student.email.ilike(qlike), Student.phone.ilike(qlike), Student.roll_no.ilike(qlike)))
+            base = base.filter(or_(Student.name.ilike(qlike), Student.email.ilike(qlike), Student.phone.ilike(qlike), Student.roll_no.ilike(qlike)))
         pagination = base.order_by(Student.id).distinct().paginate(page=page, per_page=per_page)
         # also provide counts for the header/hero
         students_count = Student.query.count()

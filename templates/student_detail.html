@@ -71,6 +71,9 @@
 
       <button class="btn btn-success" type="submit">Save</button>
       <span id="save-status" class="ms-3"></span>
+      {% if current_user.is_authenticated and current_user.role == 'admin' %}
+        <button id="delete-student-btn" type="button" class="btn btn-danger ms-2">Delete Student</button>
+      {% endif %}
     </form>
   </div>
 
@@ -156,7 +159,56 @@
   </div>
 </div>
 
+      <!-- Delete Student Modal -->
+      <div class="modal fade" id="confirmDeleteStudentModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Confirm Delete Student</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">This will permanently delete the student and all related records. Continue?</div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button id="confirm-delete-student-btn" type="button" class="btn btn-danger">Delete Student</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
 {% endblock %}
+
+{% if current_user.is_authenticated and current_user.role == 'admin' %}
+<script>
+document.addEventListener('DOMContentLoaded', ()=>{
+  const deleteBtn = document.getElementById('delete-student-btn');
+  const confirmBtn = document.getElementById('confirm-delete-student-btn');
+  if(deleteBtn && confirmBtn){
+    deleteBtn.addEventListener('click', ()=>{
+      const modal = new bootstrap.Modal(document.getElementById('confirmDeleteStudentModal'));
+      modal.show();
+    });
+
+    confirmBtn.addEventListener('click', async ()=>{
+      const sid = window.SID;
+      if(!sid) return;
+      try{
+        const res = await fetch(`/students/${sid}/delete`, {method: 'POST', headers: {'X-Requested-With':'XMLHttpRequest'}});
+        if(res.ok){
+          // redirect to students list
+          location.href = '/students';
+        } else {
+          const j = await res.json().catch(()=>({}));
+          alert(j.error || 'Unable to delete student');
+        }
+      }catch(e){
+        alert('Error deleting student');
+      }
+    });
+  }
+});
+</script>
+{% endif %}
 

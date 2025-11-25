@@ -2,7 +2,7 @@ import os
 from flask import Flask, render_template, request, jsonify, redirect, url_for
 from models import db, Student, Room, Allocation, Payment, Complaint, User
 from flask_login import LoginManager, login_user, logout_user, current_user, login_required
-from werkzeug.security import check_password_hash
+# removed unused check_password_hash import; password checking is handled on User model
 import smtplib
 import ssl
 from email.message import EmailMessage
@@ -12,7 +12,29 @@ from sqlalchemy import or_
 
 def create_app():
     app = Flask(__name__, static_folder='static', template_folder='templates')
-    database_url = os.environ.get('DATABASE_URL') or 'sqlite:///hostel.db'
+    # ensure instance folder exists and prefer instance DB to avoid duplicate files
+    try:
+        os.makedirs(app.instance_path, exist_ok=True)
+    except Exception:
+        # if instance_path creation fails, continue; SQLAlchemy will still attempt to create DB
+        pass
+
+    instance_db = os.path.join(app.instance_path, 'hostel.db')
+    # normalize path for sqlite URL (use forward slashes)
+    instance_db_url = f"sqlite:///{instance_db.replace('\\', '/') }"
+    database_url = os.environ.get('DATABASE_URL') or instance_db_url
+    # if no explicit DATABASE_URL provided and a root `hostel.db` exists, remove it to avoid duplicates
+    try:
+        if not os.environ.get('DATABASE_URL'):
+            root_db = os.path.join(os.getcwd(), 'hostel.db')
+            if os.path.exists(root_db) and os.path.abspath(root_db) != os.path.abspath(instance_db):
+                try:
+                    os.remove(root_db)
+                except Exception:
+                    # non-fatal: ignore if cannot remove
+                    pass
+    except Exception:
+        pass
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or 'dev-secret-key'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -78,6 +100,20 @@ def create_app():
                     db.session.commit()
                 except Exception:
                     db.session.rollback()
+        except Exception:
+            db.session.rollback()
+
+        # Recompute room occupancy from allocations to correct any drift
+        try:
+            rooms = Room.query.all()
+            for r in rooms:
+                try:
+                    actual = Allocation.query.filter_by(room_id=r.id).count()
+                    if (r.occupancy or 0) != actual:
+                        r.occupancy = actual
+                except Exception:
+                    pass
+            db.session.commit()
         except Exception:
             db.session.rollback()
 
@@ -174,6 +210,12 @@ def create_app():
             if k not in data:
                 return jsonify({'error': f'missing {k}'}), 400
 
+        # create student and accept optional total_fee
+        try:
+            total_fee = float(data.get('total_fee')) if data.get('total_fee') not in (None, '') else 0.0
+        except Exception:
+            return jsonify({'error': 'invalid total_fee value'}), 400
+
         student = Student(
             name=data['name'],
             email=data['email'],
@@ -181,9 +223,14 @@ def create_app():
             roll_no=data['roll_no'],
             gender=data.get('gender'),
             year=data.get('year'),
+            total_fee=total_fee,
         )
         db.session.add(student)
-        db.session.commit()
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'error': 'unable to create student', 'detail': str(e)}), 400
         return jsonify(student.to_dict()), 201
 
     # Public registration endpoint (form or JSON)
@@ -196,10 +243,22 @@ def create_app():
             data = request.get_json() or {}
         else:
             data = request.form.to_dict() if request.form else {}
+
+        # validate required fields
         required = ('name', 'email', 'roll_no')
         for k in required:
             if not data.get(k):
+                # render the form again with error for HTML form submissions
+                if request.method == 'POST' and not request.is_json:
+                    return render_template('register.html', error=f'missing {k}'), 400
                 return jsonify({'error': f'missing {k}'}), 400
+
+        # parse optional numeric fields safely
+        try:
+            total_fee = float(data.get('total_fee')) if data.get('total_fee') not in (None, '') else 0.0
+        except Exception:
+            total_fee = 0.0
+
         student = Student(
             name=data.get('name'),
             email=data.get('email'),
@@ -207,15 +266,27 @@ def create_app():
             roll_no=data.get('roll_no'),
             gender=data.get('gender'),
             year=data.get('year'),
-            parent_name=data.get('parent_name') or data.get('phone_parent'),
-            parent_phone=data.get('parent_phone') or data.get('phone_parent'),
+            parent_name=data.get('parent_name'),
+            parent_phone=data.get('parent_phone'),
             aadhar_number=data.get('aadhar_number'),
             college_admission_number=data.get('college_admission_number'),
             college_name=data.get('college_name'),
-            address=data.get('address')
+            address=data.get('address'),
+            total_fee=total_fee,
         )
         db.session.add(student)
-        db.session.commit()
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            # for form POSTs, re-render with error
+            if request.method == 'POST' and not request.is_json:
+                return render_template('register.html', error='Unable to register student: ' + str(e)), 400
+            return jsonify({'error': 'unable to create student', 'detail': str(e)}), 400
+
+        # on successful HTML form POST, redirect to students list
+        if not request.is_json:
+            return redirect(url_for('students_page'))
         return jsonify(student.to_dict()), 201
 
     # Delete a student (admin only)
@@ -225,16 +296,33 @@ def create_app():
         if getattr(current_user, 'role', '') != 'admin':
             return jsonify({'error':'forbidden'}), 403
         s = Student.query.get_or_404(student_id)
-        # delete related records: allocations, payments, complaints, installments, student_badges
+        # delete related records safely and adjust room occupancy
         from models import Allocation, Payment, Complaint, Installment, StudentBadge
-        Allocation.query.filter_by(student_id=s.id).delete()
-        Payment.query.filter_by(student_id=s.id).delete()
-        Complaint.query.filter_by(student_id=s.id).delete()
-        Installment.query.filter_by(student_id=s.id).delete()
-        StudentBadge.query.filter_by(student_id=s.id).delete()
-        db.session.delete(s)
-        db.session.commit()
-        return jsonify({'message':'deleted'})
+
+        try:
+            # handle allocations: decrement room occupancy for any active allocation
+            allocs = Allocation.query.filter_by(student_id=s.id).all()
+            for a in allocs:
+                try:
+                    if a.room and (a.room.occupancy or 0) > 0:
+                        a.room.occupancy = max(0, (a.room.occupancy or 0) - 1)
+                except Exception:
+                    pass
+                db.session.delete(a)
+
+            # remove other dependent rows (use bulk delete for speed)
+            Payment.query.filter_by(student_id=s.id).delete(synchronize_session=False)
+            Complaint.query.filter_by(student_id=s.id).delete(synchronize_session=False)
+            Installment.query.filter_by(student_id=s.id).delete(synchronize_session=False)
+            StudentBadge.query.filter_by(student_id=s.id).delete(synchronize_session=False)
+
+            # finally delete the student record
+            db.session.delete(s)
+            db.session.commit()
+            return jsonify({'message': 'deleted'})
+        except Exception:
+            db.session.rollback()
+            return jsonify({'error': 'unable to delete'}), 500
 
     @app.route('/api/allocate', methods=['POST'])
     def api_allocate():

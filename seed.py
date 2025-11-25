@@ -95,6 +95,8 @@ def seed_db(app):
 
 
 if __name__ == '__main__':
-    os.environ.setdefault('DATABASE_URL', 'sqlite:///hostel.db')
+    # prefer instance DB path so we avoid duplicate root DB files
+    inst_db = os.path.join('instance', 'hostel.db')
+    os.environ.setdefault('DATABASE_URL', f'sqlite:///{inst_db}')
     app = create_app()
     seed_db(app)

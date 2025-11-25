@@ -26,8 +26,11 @@ class Student(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     allocation = db.relationship('Allocation', back_populates='student', uselist=False)
-    payments = db.relationship('Payment', back_populates='student')
-    complaints = db.relationship('Complaint', back_populates='student')
+    allocation = db.relationship('Allocation', back_populates='student', uselist=False, cascade='all, delete-orphan')
+    payments = db.relationship('Payment', back_populates='student', cascade='all, delete-orphan')
+    complaints = db.relationship('Complaint', back_populates='student', cascade='all, delete-orphan')
+
+    # student_badges and installments are defined via backrefs on their models with cascading
 
     def to_dict(self):
         return {
@@ -138,7 +141,8 @@ class Installment(db.Model):
     paid_date = db.Column(db.DateTime, nullable=True)
     status = db.Column(db.String(30), default='due')
 
-    student = db.relationship('Student', backref='installments')
+    # define backref with cascade so that deleting a Student cleans up installments
+    student = db.relationship('Student', backref=db.backref('installments', cascade='all, delete-orphan'))
 
 
 class Message(db.Model):
@@ -176,7 +180,7 @@ class StudentBadge(db.Model):
     badge_id = db.Column(db.Integer, db.ForeignKey('badges.id'), nullable=False)
     awarded_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    student = db.relationship('Student', backref='student_badges')
+    student = db.relationship('Student', backref=db.backref('student_badges', cascade='all, delete-orphan'))
     badge = db.relationship('Badge')
 
 

@@ -1,4 +1,5 @@
 import os
+import logging
 from flask import Flask, render_template, request, jsonify, redirect, url_for
 from models import db, Student, Room, Allocation, Payment, Complaint, User
 from flask_login import LoginManager, login_user, logout_user, current_user, login_required
@@ -12,6 +13,9 @@ from sqlalchemy import or_
 
 def create_app():
     app = Flask(__name__, static_folder='static', template_folder='templates')
+    # configure basic logging
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(name)s: %(message)s')
+    app.logger = logging.getLogger('managmentsystem')
     # ensure instance folder exists and prefer instance DB to avoid duplicate files
     try:
         os.makedirs(app.instance_path, exist_ok=True)
@@ -36,6 +40,8 @@ def create_app():
     except Exception:
         pass
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    # allow toggling SQL echo for debugging via env var
+    app.config['SQLALCHEMY_ECHO'] = bool(os.environ.get('SQLALCHEMY_ECHO', ''))
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or 'dev-secret-key'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -300,6 +306,7 @@ def create_app():
         from models import Allocation, Payment, Complaint, Installment, StudentBadge
 
         try:
+            app.logger.info('Deleting student id=%s requested by user=%s', student_id, getattr(current_user, 'id', None))
             # handle allocations: decrement room occupancy for any active allocation
             allocs = Allocation.query.filter_by(student_id=s.id).all()
             for a in allocs:
@@ -307,7 +314,7 @@ def create_app():
                     if a.room and (a.room.occupancy or 0) > 0:
                         a.room.occupancy = max(0, (a.room.occupancy or 0) - 1)
                 except Exception:
-                    pass
+                    app.logger.exception('Error adjusting room occupancy for allocation %s', getattr(a, 'id', None))
                 db.session.delete(a)
 
             # remove other dependent rows (use bulk delete for speed)
@@ -319,10 +326,11 @@ def create_app():
             # finally delete the student record
             db.session.delete(s)
             db.session.commit()
-            return jsonify({'message': 'deleted'})
-        except Exception:
+            return jsonify({'success': True}), 200
+        except Exception as exc:
+            app.logger.exception('Failed to delete student id=%s: %s', student_id, exc)
             db.session.rollback()
-            return jsonify({'error': 'unable to delete'}), 500
+            return jsonify({'success': False, 'error': 'unable to delete'}), 500
 
     @app.route('/api/allocate', methods=['POST'])
     def api_allocate():

@@ -196,12 +196,12 @@ document.addEventListener('DOMContentLoaded', ()=>{
       if(!sid) return;
       try{
         const res = await fetch(`/students/${sid}/delete`, {method: 'POST', headers: {'X-Requested-With':'XMLHttpRequest'}});
-        if(res.ok){
+        const json = await res.json().catch(()=>({}));
+        if(res.ok && json.success){
           // redirect to students list
           location.href = '/students';
         } else {
-          const j = await res.json().catch(()=>({}));
-          alert(j.error || 'Unable to delete student');
+          alert(json.error || 'Unable to delete student');
         }
       }catch(e){
         alert('Error deleting student');

@@ -1,3 +1,6 @@
+import sys, os
+# ensure repo root is on sys.path so imports work when running this script directly
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from app import create_app
 from models import db, Student
 

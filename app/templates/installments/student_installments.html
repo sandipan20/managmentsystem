@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Student Installments - Hostel Manager{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Installments - {{ student.full_name }}</h1>
+    <a href="{{ url_for('students.view_student', aadhaar=student.aadhaar_number) }}" 
+       class="btn btn-primary">Back to Student</a>
+</div>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>Installment No.</th>
+                <th>Due Date</th>
+                <th>Amount</th>
+                <th>Payment Status</th>
+                <th>Paid Date</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for inst in installments %}
+                <tr>
+                    <td>#{{ inst.installment_number }}</td>
+                    <td>{{ inst.due_date }}</td>
+                    <td>₹{{ inst.amount|round(2) }}</td>
+                    <td>
+                        {% if inst.payment_status == 'Paid' %}
+                            <span class="badge badge-success">Paid</span>
+                        {% else %}
+                            <span class="badge badge-warning">Pending</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ inst.paid_date or '-' }}</td>
+                    <td>
+                        {% if inst.payment_status == 'Pending' %}
+                            <button class="btn btn-success btn-sm" 
+                                    onclick="markPaid('{{ student.aadhaar_number }}', {{ inst.installment_number }})">Mark Paid</button>
+                            <button class="btn btn-warning btn-sm" 
+                                    onclick="sendReminder('{{ student.aadhaar_number }}', {{ inst.installment_number }})">Send Reminder</button>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+function markPaid(aadhaar, installmentNumber) {
+    if (confirm('Mark this installment as paid?')) {
+        const formData = new FormData();
+        formData.append('aadhaar_number', aadhaar);
+        formData.append('installment_number', installmentNumber);
+
+        fetch('{{ url_for("installments.mark_paid") }}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(err => alert('Error: ' + err));
+    }
+}
+
+function sendReminder(aadhaar, installmentNumber) {
+    if (confirm('Send reminder email to the student?')) {
+        // Build a safe URL template from Flask, using 0 as a placeholder
+        // for the integer converter. We'll replace '/0' with the actual
+        // installment number at runtime so Werkzeug's int converter isn't
+        // invoked with a non-integer literal during template rendering.
+        const urlTemplate = `{{ url_for('installments.send_reminder', aadhaar='AADHAAR', installment_number=0) }}`;
+        const url = urlTemplate.replace('AADHAAR', aadhaar).replace('/0', '/' + installmentNumber);
+
+        fetch(url, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(err => alert('Error: ' + err));
+    }
+}
+</script>
+{% endblock %}

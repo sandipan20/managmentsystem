@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Upcoming Payments - Hostel Manager{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Upcoming Payments (Next 30 Days)</h1>
+</div>
+
+<div class="card-grid">
+    <div class="stat-card">
+        <div class="stat-label">Upcoming Payments</div>
+        <div class="stat-number">{{ installments|length }}</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-label">Total Amount</div>
+        <div class="stat-number">₹{{ (installments|map(attribute='amount')|sum)|round(2) }}</div>
+    </div>
+</div>
+
+<div class="card">
+    {% if installments %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Student Name</th>
+                    <th>Email</th>
+                    <th>Installment</th>
+                    <th>Due Date</th>
+                    <th>Amount</th>
+                    <th>Days Until Due</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inst in installments %}
+                    <tr>
+                        <td>{{ inst.full_name }}</td>
+                        <td>{{ inst.email }}</td>
+                        <td>#{{ inst.installment_number }}</td>
+                        <td>{{ inst.due_date }}</td>
+                        <td>₹{{ inst.amount|round(2) }}</td>
+                        <td>
+                            <span class="badge badge-info">
+                                Soon
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('students.view_student', aadhaar=inst.aadhaar_number) }}" 
+                               class="btn btn-primary btn-sm">View Student</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p style="text-align: center; padding: 40px; color: var(--text-light);">
+            No upcoming payments in the next 30 days.
+        </p>
+    {% endif %}
+</div>
+{% endblock %}

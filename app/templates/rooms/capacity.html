@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Room Capacity Settings - Hostel Manager{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Room Capacity Settings</h1>
+    <a href="{{ url_for('rooms.list_rooms') }}" class="btn btn-primary">Back to Rooms</a>
+</div>
+
+<div class="card" style="max-width: 500px;">
+    {% if error %}
+        <div class="alert alert-error">{{ error }}</div>
+    {% endif %}
+
+    {% if success %}
+        <div class="alert alert-success">{{ success }}</div>
+    {% endif %}
+
+    <form method="POST">
+        <div class="form-group">
+            <label for="capacity">Students per Room</label>
+            <input type="number" id="capacity" name="capacity" required 
+                   min="1" value="{{ current_capacity }}">
+            <p style="font-size: 12px; color: var(--text-light); margin-top: 8px;">
+                Set how many students are allowed in each room. This will be applied to all rooms.
+            </p>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Update Capacity</button>
+        <a href="{{ url_for('rooms.list_rooms') }}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+
+<div class="card" style="max-width: 500px; margin-top: 30px; background-color: #f0f4ff; border-left: 4px solid var(--primary-color);">
+    <h3 style="color: var(--primary-color);">ℹ️ Information</h3>
+    <p>The room capacity setting determines the maximum number of students that can be assigned to each room. When a new student is added, they will be automatically assigned to the first available room with capacity.</p>
+</div>
+{% endblock %}

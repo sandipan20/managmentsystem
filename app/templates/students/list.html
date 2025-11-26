@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}Students - Hostel Manager{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Students</h1>
+    <a href="{{ url_for('students.add_student') }}" class="btn btn-primary">Add New Student</a>
+</div>
+
+<div class="card">
+    <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search by name, admission number, Aadhaar, or email...">
+        <button class="btn btn-primary btn-sm" onclick="searchStudents()">Search</button>
+    </div>
+</div>
+
+<div class="card">
+    {% if students %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Full Name</th>
+                    <th>Admission Number</th>
+                    <th>Aadhaar</th>
+                    <th>Mobile</th>
+                    <th>College</th>
+                    <th>Room</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="students-table-body">
+                {% for student in students %}
+                    <tr>
+                        <td>{{ student.full_name }}</td>
+                        <td>{{ student.admission_number }}</td>
+                        <td>{{ student.aadhaar_number }}</td>
+                        <td>{{ student.mobile_number }}</td>
+                        <td>{{ student.college_name }}</td>
+                        <td>{{ student.room_allocation }}</td>
+                        <td>
+                            <a href="{{ url_for('students.view_student', aadhaar=student.aadhaar_number) }}" 
+                               class="btn btn-primary btn-sm">View</a>
+                            <a href="{{ url_for('students.edit_student', aadhaar=student.aadhaar_number) }}" 
+                               class="btn btn-secondary btn-sm">Edit</a>
+                            <button class="btn btn-danger btn-sm" 
+                                    onclick="deleteStudent('{{ student.aadhaar_number }}', '{{ student.full_name }}')">Delete</button>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p style="text-align: center; padding: 40px; color: var(--text-light);">
+            No students found. <a href="{{ url_for('students.add_student') }}">Add one now</a>
+        </p>
+    {% endif %}
+</div>
+
+<style>
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.page-header h1 {
+    margin: 0;
+}
+
+.search-box {
+    display: flex;
+    gap: 10px;
+}
+
+.search-box input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+}
+</style>
+
+<script>
+function searchStudents() {
+    const query = document.getElementById('search-input').value;
+    
+    if (query.length < 2) {
+        alert('Please enter at least 2 characters');
+        return;
+    }
+    
+    fetch(`{{ url_for('students.search') }}?q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.getElementById('students-table-body');
+            tbody.innerHTML = '';
+            
+            if (data.results.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No students found</td></tr>';
+            } else {
+                data.results.forEach(student => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${student.full_name}</td>
+                        <td>${student.admission_number}</td>
+                        <td>${student.aadhaar_number}</td>
+                        <td>${student.mobile_number}</td>
+                        <td>${student.college_name}</td>
+                        <td>${student.room_allocation}</td>
+                        <td>
+                            <a href="/students/${student.aadhaar_number}" class="btn btn-primary btn-sm">View</a>
+                            <a href="/students/${student.aadhaar_number}/edit" class="btn btn-secondary btn-sm">Edit</a>
+                            <button class="btn btn-danger btn-sm" 
+                                    onclick="deleteStudent('${student.aadhaar_number}', '${student.full_name}')">Delete</button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+        });
+}
+
+function deleteStudent(aadhaar, name) {
+    if (confirm(`Are you sure you want to delete ${name}? This action cannot be undone.`)) {
+        fetch(`{{ url_for('students.delete_student', aadhaar='AADHAAR') }}`.replace('AADHAAR', aadhaar), {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(err => alert('Error: ' + err));
+    }
+}
+</script>
+{% endblock %}

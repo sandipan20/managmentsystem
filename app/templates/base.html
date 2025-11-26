@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Hostel Manager{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% if session.get('admin_id') %}
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <h1>🏨 Hostel Manager</h1>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="{{ url_for('dashboard.index') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('students.list_students') }}">Students</a></li>
+                <li><a href="{{ url_for('students.add_student') }}">Add Student</a></li>
+                <li><a href="{{ url_for('rooms.list_rooms') }}">Rooms</a></li>
+                <li><a href="{{ url_for('installments.view_pending') }}">Payments</a></li>
+                <li><a href="{{ url_for('settings.email_settings') }}">Settings</a></li>
+                <li><a href="{{ url_for('auth.logout') }}" class="logout">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+    {% endif %}
+
+    <div class="container">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-info">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block title %}Student Details - Hostel Manager{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>{{ student.full_name }}</h1>
+    <div>
+        <a href="{{ url_for('students.edit_student', aadhaar=student.aadhaar_number) }}" 
+           class="btn btn-secondary">Edit</a>
+        <a href="{{ url_for('students.list_students') }}" 
+           class="btn btn-primary">Back to Students</a>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
+    <div>
+        <div class="card">
+            <h3>Personal Information</h3>
+            <table class="detail-table">
+                <tr>
+                    <th>Aadhaar Number</th>
+                    <td>{{ student.aadhaar_number }}</td>
+                </tr>
+                <tr>
+                    <th>Date of Birth</th>
+                    <td>{{ student.date_of_birth }}</td>
+                </tr>
+                <tr>
+                    <th>Gender</th>
+                    <td>{{ student.gender }}</td>
+                </tr>
+                <tr>
+                    <th>Mobile Number</th>
+                    <td>{{ student.mobile_number }}</td>
+                </tr>
+                <tr>
+                    <th>Email</th>
+                    <td>{{ student.email }}</td>
+                </tr>
+                <tr>
+                    <th>Parent Names</th>
+                    <td>{{ student.parent_names }}</td>
+                </tr>
+                <tr>
+                    <th>Emergency Contact</th>
+                    <td>{{ student.emergency_contact }}</td>
+                </tr>
+                <tr>
+                    <th>Full Address</th>
+                    <td>{{ student.full_address }}</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="card">
+            <h3>College & Hostel Details</h3>
+            <table class="detail-table">
+                <tr>
+                    <th>College Name</th>
+                    <td>{{ student.college_name }}</td>
+                </tr>
+                <tr>
+                    <th>Admission Number</th>
+                    <td>{{ student.admission_number }}</td>
+                </tr>
+                <tr>
+                    <th>Registration Date</th>
+                    <td>{{ student.registration_date }}</td>
+                </tr>
+                <tr>
+                    <th>Session Expiration</th>
+                    <td>{{ student.session_expiration_date }}</td>
+                </tr>
+                <tr>
+                    <th>Room Allocation</th>
+                    <td>
+                        <span class="badge badge-info" id="current-room">{{ student.room_allocation }}</span>
+                        <div style="margin-top:8px;">
+                            <select id="assign-room-select" class="form-control" style="display:inline-block; width:auto;">
+                                <option value="">Select room</option>
+                                {% for r in available_rooms %}
+                                    <option value="{{ r.room_number }}">{{ r.room_number }} — {{ r.occupied_count }} / {{ r.capacity }}</option>
+                                {% endfor %}
+                            </select>
+                            <button id="assign-room-btn" class="btn btn-sm btn-primary" style="margin-left:8px;">Assign</button>
+                            <button id="vacate-room-btn" class="btn btn-sm btn-danger" style="margin-left:8px;">Vacate</button>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="card">
+            <h3>Fee Details</h3>
+            <table class="detail-table">
+                <tr>
+                    <th>Total Fee</th>
+                    <td>₹{{ student.total_fee }}</td>
+                </tr>
+                <tr>
+                    <th>Number of Installments</th>
+                    <td>{{ student.installment_count }}</td>
+                </tr>
+                <tr>
+                    <th>Amount per Installment</th>
+                    <td>₹{{ (student.total_fee / student.installment_count)|round(2) }}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <div>
+        <div class="card">
+            <h3>Installments</h3>
+            {% if installments %}
+                <table class="installment-table">
+                    <thead>
+                        <tr>
+                            <th>No.</th>
+                            <th>Due Date</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for inst in installments %}
+                            <tr>
+                                <td>{{ inst.installment_number }}</td>
+                                <td>{{ inst.due_date }}</td>
+                                <td>₹{{ inst.amount|round(2) }}</td>
+                                <td>
+                                    {% if inst.payment_status == 'Paid' %}
+                                        <span class="badge badge-success">Paid</span>
+                                    {% else %}
+                                        <span class="badge badge-warning">Pending</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <a href="{{ url_for('installments.student_installments', aadhaar=student.aadhaar_number) }}" 
+                   class="btn btn-primary btn-sm" style="margin-top: 15px;">View Details</a>
+            {% else %}
+                <p style="text-align: center; color: var(--text-light);">No installments found</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.detail-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.detail-table th {
+    background-color: var(--light-gray);
+    padding: 10px;
+    text-align: left;
+    font-weight: 600;
+    width: 40%;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.detail-table td {
+    padding: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.installment-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+.installment-table th {
+    background-color: var(--light-gray);
+    padding: 8px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.installment-table td {
+    padding: 8px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+@media (max-width: 768px) {
+    div[style*="grid-template-columns: 2fr 1fr"] {
+        grid-template-columns: 1fr !important;
+    }
+}
+</style>
+<script>
+document.getElementById('assign-room-btn').addEventListener('click', function(e){
+    e.preventDefault();
+    const select = document.getElementById('assign-room-select');
+    const room = select.value;
+    if (!room) { alert('Select a room to assign'); return; }
+
+    fetch(`{{ url_for('students.assign_student', aadhaar=student.aadhaar_number) }}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `room_number=${encodeURIComponent(room)}`
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(err => alert('Error: ' + err));
+});
+
+document.getElementById('vacate-room-btn').addEventListener('click', function(e){
+    e.preventDefault();
+    if (!confirm('Vacate this student from their room?')) return;
+    fetch(`{{ url_for('students.vacate_student_from_studentpage', aadhaar=student.aadhaar_number) }}`, {
+        method: 'POST'
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    }).catch(err => alert('Error: ' + err));
+});
+</script>
+{% endblock %}

@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+
+{% block title %}Rooms - Hostel Manager{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Room Management</h1>
+    <button class="btn btn-primary" id="toggle-add-room" aria-expanded="false">Add New Room</button>
+</div>
+
+<div class="card-grid" role="list">
+    <div class="stat-card" role="listitem" aria-label="Total rooms">
+        <div class="stat-label">Total Rooms</div>
+        <div class="stat-number">{{ stats.total_rooms or 0 }}</div>
+    </div>
+
+    <div class="stat-card" role="listitem" aria-label="Occupied rooms">
+        <div class="stat-label">Occupied Rooms</div>
+        <div class="stat-number">{{ stats.occupied_rooms or 0 }}</div>
+    </div>
+
+    <div class="stat-card" role="listitem" aria-label="Vacant rooms">
+        <div class="stat-label">Vacant Rooms</div>
+        <div class="stat-number">{{ stats.vacant_rooms or 0 }}</div>
+    </div>
+
+    <div class="stat-card" role="listitem" aria-label="Capacity per room">
+        <div class="stat-label">Capacity per Room</div>
+        <div class="stat-number">{{ current_capacity or '—' }}</div>
+    </div>
+</div>
+
+<!-- Add Room form (initially hidden) -->
+<div id="add-room-form" class="card visually-hidden" aria-hidden="true">
+    <h3>Add New Room</h3>
+    <!-- Ensure you render a CSRF token from your Flask app (e.g. using Flask-WTF) -->
+    <form method="POST" action="{{ url_for('rooms.add_room') }}" novalidate>
+        {{ csrf_token() if csrf_token is defined else '' }}
+        <div class="form-row">
+            <div class="form-group">
+                <label for="room_number">Room Number</label>
+                <input type="text"
+                       id="room_number"
+                       name="room_number"
+                       required
+                       aria-required="true"
+                       placeholder="e.g., A-101, Room-1, Dorm-A"
+                       pattern="^[A-Za-z0-9\-\s]+$"
+                       title="Letters, numbers, spaces and hyphens only">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="capacity">Capacity (optional)</label>
+                <input type="number" id="capacity" name="capacity" min="1" placeholder="e.g., 2">
+                <small class="hint">Leave empty to use default capacity.</small>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Create Room</button>
+        <button type="button" class="btn btn-secondary" id="cancel-add-room">Cancel</button>
+    </form>
+</div>
+
+<div class="card">
+    <div class="flex-between">
+        <h3>All Rooms ({{ stats.total_rooms or 0 }})</h3>
+        <a href="{{ url_for('rooms.manage_capacity') }}" class="btn btn-secondary btn-sm">Set Capacity</a>
+    </div>
+
+    {% if stats.total_rooms and stats.total_rooms > 0 %}
+        <div class="room-grid" role="list">
+            {% for room in rooms %}
+                {# compute safe percentage: if capacity is zero or None show 0% to avoid division by zero #}
+                {% set cap = room.capacity or 0 %}
+                {% set occupied = room.occupied_count or 0 %}
+                {% set pct = (occupied / cap * 100) if cap else 0 %}
+                <div class="room-card {% if cap and occupied >= cap %}full{% endif %}" role="listitem" aria-label="Room {{ room.room_number }}">
+                    <div class="room-number">{{ room.room_number }}</div>
+
+                    <div class="room-capacity" aria-hidden="false">
+                        <span class="occupied" aria-label="Occupied">{{ occupied }}</span> /
+                        <span class="total" aria-label="Capacity">{{ cap if cap else '—' }}</span>
+                    </div>
+
+                    <div class="room-status" aria-live="polite">
+                        {% if cap and occupied >= cap %}
+                            <span class="badge badge-danger" role="status">Full</span>
+                        {% elif occupied > 0 %}
+                            <span class="badge badge-warning" role="status">Partially Occupied</span>
+                        {% else %}
+                            <span class="badge badge-success" role="status">Vacant</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Use a semantic progress element for accessibility. Fallback to visual bar for older browsers. -->
+                    <div class="room-progress" aria-hidden="false">
+                        <progress class="progress-native" value="{{ occupied if cap else 0 }}" max="{{ cap if cap else 1 }}" aria-valuenow="{{ occupied }}" aria-valuemax="{{ cap if cap else 1 }}" aria-label="Room occupancy"></progress>
+                        <div class="progress-bar" style="width: {{ pct|round(1) }}%;"></div>
+                    </div>
+
+                    <div class="room-actions" style="margin-top:12px;">
+                        <!-- View and Edit buttons - fully functional -->
+                        <a href="{{ url_for('rooms.view_room', room_number=room.room_number) }}" 
+                           class="btn btn-sm btn-outline" 
+                           title="View room details and students">View</a>
+                        <a href="{{ url_for('rooms.edit_room', room_number=room.room_number) }}" 
+                           class="btn btn-sm btn-outline" 
+                           title="Edit room capacity">Edit</a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p style="text-align: center; color: var(--text-light); padding: 40px;">
+            No rooms created yet.
+            <button onclick="toggleAddRoom()" class="btn btn-primary" style="color: white;">Create one now</button>
+        </p>
+    {% endif %}
+</div>
+
+<style>
+/* Keep your styles but add a utility class for hiding */
+.visually-hidden { display: none; }
+
+/* room grid / cards (kept from your original design) */
+.room-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.room-card {
+    background: white;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.room-card:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.room-card.full {
+    border-color: var(--danger-color);
+    background-color: #fed7d7;
+}
+
+.room-number {
+    font-size: 20px;
+    font-weight: bold;
+    color: var(--text-dark);
+    margin-bottom: 10px;
+}
+
+.room-capacity {
+    font-size: 18px;
+    color: var(--primary-color);
+    margin-bottom: 10px;
+}
+
+.room-capacity .occupied {
+    font-weight: bold;
+}
+
+.room-status {
+    margin-bottom: 10px;
+}
+
+.room-progress {
+    height: 10px;
+    background-color: var(--border-color);
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    transition: width 0.3s;
+}
+
+/* native progress element hidden visually, but available to screen readers,
+   or visible if you prefer to show it */
+.progress-native { display: none; }
+
+#add-room-form { margin-bottom: 20px; }
+
+.form-row { display: grid; grid-template-columns: 1fr; gap: 15px; }
+
+@media (max-width: 768px) {
+    .room-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+}
+</style>
+
+<script>
+/* Toggle add room with proper aria attributes */
+function setFormHidden(hidden) {
+    const form = document.getElementById('add-room-form');
+    const toggleBtn = document.getElementById('toggle-add-room');
+    form.classList.toggle('visually-hidden', hidden);
+    form.setAttribute('aria-hidden', hidden ? 'true' : 'false');
+    if (toggleBtn) toggleBtn.setAttribute('aria-expanded', hidden ? 'false' : 'true');
+}
+
+function toggleAddRoom() {
+    const form = document.getElementById('add-room-form');
+    const isHidden = form.classList.contains('visually-hidden');
+    setFormHidden(!isHidden);
+}
+
+document.getElementById('toggle-add-room')?.addEventListener('click', toggleAddRoom);
+document.getElementById('cancel-add-room')?.addEventListener('click', function() { setFormHidden(true); });
+
+/* Optional: simple client-side validation improvement (keeps it lightweight) */
+document.querySelector('#add-room-form form')?.addEventListener('submit', function(e) {
+    const roomInput = this.querySelector('#room_number');
+    if (!roomInput || !roomInput.value.trim()) {
+        e.preventDefault();
+        roomInput.focus();
+        alert('Please enter a room number.');
+    }
+});
+</script>
+{% endblock %}

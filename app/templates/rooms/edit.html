@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Room {{ room.room_number }} - Hostel Manager{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <a href="{{ url_for('rooms.list_rooms') }}" class="btn btn-secondary" style="margin-right: auto;">← Back to Rooms</a>
+    <h1>Edit Room: {{ room.room_number }}</h1>
+</div>
+
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <h2>Room Information</h2>
+    
+    <div style="margin-bottom: 20px; padding: 15px; background-color: var(--background-light); border-radius: 6px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 10px;">
+            <div>
+                <div style="font-size: 12px; color: var(--text-light); margin-bottom: 5px;">Room Number</div>
+                <div style="font-size: 20px; font-weight: bold;">{{ room.room_number }}</div>
+            </div>
+            <div>
+                <div style="font-size: 12px; color: var(--text-light); margin-bottom: 5px;">Current Occupancy</div>
+                <div style="font-size: 20px; font-weight: bold;">{{ room.occupied_count or 0 }} / {{ room.capacity or 0 }}</div>
+            </div>
+        </div>
+    </div>
+
+    {% if error %}
+        <div style="padding: 15px; background-color: #fed7d7; color: #742a2a; border-radius: 6px; margin-bottom: 20px;">
+            <strong>Error:</strong> {{ error }}
+        </div>
+    {% endif %}
+
+    <form method="POST" novalidate>
+        <div class="form-group">
+            <label for="capacity">Room Capacity (Students)</label>
+            <input type="number" 
+                   id="capacity" 
+                   name="capacity" 
+                   value="{{ room.capacity or 4 }}" 
+                   min="1" 
+                   required
+                   aria-required="true"
+                   style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 16px;">
+            <small style="color: var(--text-light); margin-top: 5px; display: block;">
+                Note: The current occupancy is {{ room.occupied_count or 0 }} student(s). 
+                The new capacity cannot be less than the current occupancy.
+            </small>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 30px;">
+            <button type="submit" class="btn btn-primary">Update Capacity</button>
+            <a href="{{ url_for('rooms.view_room', room_number=room.room_number) }}" 
+               class="btn btn-secondary">View Room</a>
+            <a href="{{ url_for('rooms.list_rooms') }}" 
+               class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<style>
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 16px;
+    font-family: inherit;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+</style>
+{% endblock %}

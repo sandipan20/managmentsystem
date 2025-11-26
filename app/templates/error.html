@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Error - Hostel Manager{% endblock %}
+
+{% block content %}
+<div style="text-align: center; padding: 60px 20px;">
+    <div style="max-width: 500px; margin: 0 auto;">
+        <h1 style="font-size: 72px; color: #f56565; margin-bottom: 10px;">⚠️</h1>
+        <h2 style="color: #2d3748; margin-bottom: 10px;">Error Occurred</h2>
+        
+        {% if error %}
+            <p style="color: #718096; font-size: 16px; margin-bottom: 30px;">{{ error }}</p>
+        {% endif %}
+
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            <a href="{{ url_for('dashboard.index') }}" class="btn btn-primary">Go to Dashboard</a>
+            <a href="javascript:history.back()" class="btn btn-secondary">Go Back</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

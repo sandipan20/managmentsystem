@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Pending Payments - Hostel Manager{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Pending Payments</h1>
+    <button class="btn btn-warning" onclick="sendBulkReminders()">Send All Reminders</button>
+</div>
+
+<div class="card-grid">
+    <div class="stat-card">
+        <div class="stat-label">Pending Payments</div>
+        <div class="stat-number">{{ stats.pending_installments }}</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-label">Overdue Payments</div>
+        <div class="stat-number">{{ stats.overdue_count }}</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-label">Total Pending Amount</div>
+        <div class="stat-number">₹{{ stats.total_pending_amount|round(2) }}</div>
+    </div>
+</div>
+
+<div class="card">
+    {% if installments %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Student Name</th>
+                    <th>Email</th>
+                    <th>Installment</th>
+                    <th>Due Date</th>
+                    <th>Amount</th>
+                    <th>Days Overdue</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inst in installments %}
+                    <tr>
+                        <td>{{ inst.full_name }}</td>
+                        <td>{{ inst.email }}</td>
+                        <td>#{{ inst.installment_number }}</td>
+                        <td>{{ inst.due_date }}</td>
+                        <td>₹{{ inst.amount|round(2) }}</td>
+                        <td>
+                            <span class="badge badge-danger">
+                                {{ inst.overdue_days }} days
+                            </span>
+                        </td>
+                        <td style="white-space: nowrap;">
+                            <a href="{{ url_for('students.view_student', aadhaar=inst.aadhaar_number) }}" 
+                               class="btn btn-primary btn-sm">View</a>
+                            <button class="btn btn-success btn-sm" 
+                                    onclick="markPaidPayment('{{ inst.aadhaar_number }}', {{ inst.installment_number }})">Mark</button>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p style="text-align: center; padding: 40px; color: var(--text-light);">
+            🎉 No pending payments! All students are up to date.
+        </p>
+    {% endif %}
+</div>
+
+<script>
+function markPaidPayment(aadhaar, installmentNumber) {
+    if (confirm('Mark this installment as paid?')) {
+        const formData = new FormData();
+        formData.append('aadhaar_number', aadhaar);
+        formData.append('installment_number', installmentNumber);
+
+        fetch('{{ url_for("installments.mark_paid") }}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        });
+    }
+}
+
+function sendBulkReminders() {
+    if (confirm('Send reminder emails to all students with overdue payments?')) {
+        fetch('{{ url_for("installments.send_bulk_reminders_route") }}', {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert(`Reminders sent: ${data.sent}/${data.total}\nFailed: ${data.failed}`);
+            if (data.errors.length > 0) {
+                console.log('Errors:', data.errors);
+            }
+        })
+        .catch(err => alert('Error: ' + err));
+    }
+}
+</script>
+{% endblock %}
